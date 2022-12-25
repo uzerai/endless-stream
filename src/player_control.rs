@@ -12,7 +12,6 @@ use bevy::app::{ App, Plugin };
 use bevy::core_pipeline::core_2d::Camera2d;
 use bevy::ecs::query::{ Without, With };
 use bevy::transform::components::Transform;
-use bevy::log::*;
 
 use crate::movement::Movable;
 
@@ -112,6 +111,8 @@ fn animate_sprite(
 pub struct Layered;
 
 // Ensures sprite layering when moving up/down the level
+// Updates the transform.translation.y coordinate to a float between 0 and 1,
+// TODO: need to genericize to accept the current level size later (hardcoded to 2000).
 fn layering_system(
     mut sprite_entities: Query<&mut Transform, (With<Movable>, With<Layered>, Without<Camera2d>)>,
 ) {
@@ -120,6 +121,6 @@ fn layering_system(
 
         transform.translation.z = next_translation;
 
-        info!("layering: <{},{},{}>", transform.translation.x, transform.translation.y, transform.translation.z);
+        // info!("layering: <{},{},{}>", transform.translation.x, transform.translation.y, transform.translation.z);
      }
 }

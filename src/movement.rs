@@ -11,13 +11,12 @@ use bevy::ecs::system::Res;
 use bevy::ecs::system::Query;
 use bevy::math::Vec2;
 use bevy::sprite::collide_aabb::{ collide, Collision };
-use crate::player_control::PlayerControlled;
 
 pub struct EntityMovementPlugin;
 
 impl Plugin for EntityMovementPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(collision_system);
+        app.add_system(movement_system);
     }
 }
 
@@ -35,7 +34,7 @@ pub struct Collidable {
     pub size: Transform,
 }
 
-// Need to figure out a way to anchor the collidable to the bottom of each sprite, 
+// TODO: Need to figure out a way to anchor the collidable to the bottom of each sprite, 
 // rather than in the center and expanding outwards from there.
 // this is required to support uneven shapes.
 impl Collidable {
@@ -54,49 +53,34 @@ impl Movable {
     }
 }
 
-// fn collision_debug_system(
-//     commands: &mut Commands,
-//     mut materials: ResMut<Assets<ColorMaterial>>,
-//     collidables: Query<(&Transform, &Collidable)>
-// ) {
-//     for(transform, collidable) in &collidables {
-//         commands.spawn(
-//             SpriteBundle {
-                
-//                 ..default()
-//             }
-//         )
-//     }
-// }
-
-// Handles collision with level edges and other collidable entities
-fn collision_system(
+fn movement_system(
     time: Res<Time>, 
-    mut player_controlled_entity: Query<(&Movable, &mut Transform, &Collidable), With<PlayerControlled>>, 
-    mut other_entities: Query<(&Transform, &Collidable), (Without<PlayerControlled>, Without<Movable>)>,
+    mut movable_entities: Query<(&Movable, &mut Transform, &Collidable)>, 
+    static_entities: Query<(&Transform, &Collidable), (Without<Movable>, Without<LevelFloor>)>,
     level: Query<(&Transform, &Sprite), (With<LevelFloor>, Without<Collidable>)>
 ) {
     let (level_transform, level_sprite) = level.single();
 
-    // Handles the movement for both the 2D camera _and_ the player movable sprite/character.
-     for (player_movable_struct,  mut player_transform, player_collidable) in &mut player_controlled_entity {
-     	debug!("position: <{},{},{}>", player_transform.translation.x, player_transform.translation.y, player_transform.translation.z);
+    for(movable, mut transform, collidable) in &mut movable_entities {
+        let translation = transform.translation;
 
-        let mut y_move = player_movable_struct.get_y_direction() * player_movable_struct.velocity * time.delta_seconds();
-        let mut x_move = player_movable_struct.get_x_direction() * player_movable_struct.velocity * time.delta_seconds();
+        // info!("movable entity position at: <{},{},{}>", translation.x, translation.y, translation.z);
+        // info!("movable entity movable direction: <{},{}>", movable.get_x_direction(), movable.get_y_direction());
+        let mut y_move = movable.get_y_direction() * movable.velocity * time.delta_seconds();
+        let mut x_move = movable.get_x_direction() * movable.velocity * time.delta_seconds();
 
-        let mut next_translation = player_transform.translation.clone();
+        let mut next_translation = translation.clone();
         next_translation.x += x_move;
         next_translation.y += y_move;
 
-        for (collidable_entity_transform, collidable_entity_collidable) in &mut other_entities {
-            let mut collidable_translation = collidable_entity_transform.translation.clone();
-            // We always assume they'll collide in a 2d plane.
-            collidable_translation.z = 1.;
-            next_translation.z = 1.;
+        for (static_entity_transform, static_entity_collidable) in &static_entities {
+            let mut static_entity_translation = static_entity_transform.translation.clone();
 
-            // Handles collisions with other entities.
-            match collide(next_translation, player_collidable.size(), collidable_translation, collidable_entity_collidable.size()) {
+            // bevy's collision works in 3d, let's make sure the translations are in the same z axis.
+            next_translation.z = 1.0;
+            static_entity_translation.z = 1.0;
+
+            match collide(next_translation, collidable.size(), static_entity_translation, static_entity_collidable.size()) {
                 None => {},
                 Some(collision) => {
                     match collision {
@@ -113,16 +97,15 @@ fn collision_system(
             }
         }
 
-        // Ensures we're still inside the level map space.
-        match collide(next_translation, player_collidable.size(), level_transform.translation, level_sprite.custom_size.expect("REASON")) {
+        match collide(next_translation, collidable.size(), level_transform.translation, level_sprite.custom_size.expect("No levelsprite custom size; assuming no level loaded.")) {
             None => {
-                warn!("No collision with level.");
+                info!("No collision with level.");
             },
             Some(collision) => {
                 match collision {
                     Collision::Inside => {
-                        player_transform.translation.y += y_move;
-                        player_transform.translation.x += x_move;
+                        transform.translation.x += x_move;
+                        transform.translation.y += y_move;
                     },
                     _ => {}
                 }

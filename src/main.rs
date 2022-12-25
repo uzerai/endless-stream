@@ -1,22 +1,29 @@
-use endless_stream::movement::LevelFloor;
-use endless_stream::player_control::Layered;
-use endless_stream::player_control::FacingDirection;
-use endless_stream::player_control::AnimationTimer;
-use endless_stream::movement::Collidable;
-use endless_stream::player_control::PlayerControlled;
-use endless_stream::movement::Movable;
-use endless_stream::player_control::PlayerControlPlugin;
-use endless_stream::movement::EntityMovementPlugin;
-
+use endless_stream::player_control::{ 
+    Layered, 
+    FacingDirection, 
+    AnimationTimer, 
+    PlayerControlled, 
+    PlayerControlPlugin 
+};
+use endless_stream::movement::{
+    LevelFloor,
+    Collidable,
+    Movable,
+    EntityMovementPlugin
+};
+use endless_stream::enemy::{ regular_enemy_movement, spawn_enemy_at };
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
 
 fn main() {
     App::new()
         .add_startup_system(setup)
-        .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
+        .add_plugins(
+            DefaultPlugins.set(ImagePlugin::default_nearest())
+        )
         .add_plugin(PlayerControlPlugin)
         .add_plugin(EntityMovementPlugin)
+        .add_system(regular_enemy_movement)
         .run();
 }
 
@@ -62,15 +69,17 @@ fn setup(
 
     // Let's just spawn a sine-wave of trees.
     for x_spawn_coord in -2500i32..2501i32 {
-        if x_spawn_coord.abs() % 100 == 0 {
+        if x_spawn_coord.abs() % 50 == 0 {
             let x_spawn_float = x_spawn_coord as f32;
-            let y_spawn_float = x_spawn_float.sin() * 500.;
+            let y_spawn_float = x_spawn_float.cos() * 500.;
             let z_spawn_float = 0.5 - (y_spawn_float / 2000.);
             spawn_tree_at(&mut commands, &asset_server, Vec3::new(x_spawn_float, y_spawn_float, z_spawn_float));
 
             // info!("Spawning tree at: <{},{},{}>", x_spawn_float, y_spawn_float, z_spawn_float);
         }
     }
+
+    spawn_enemy_at(&mut commands, &asset_server, &mut texture_atlases, Vec3::new(-400., 50., 0.));
 
     // This creates the player character.
     commands.spawn(
