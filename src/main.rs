@@ -1,3 +1,6 @@
+use bevy::prelude::*;
+use bevy::sprite::Anchor;
+
 use endless_stream::player_control::{ 
     Layered, 
     FacingDirection, 
@@ -12,8 +15,6 @@ use endless_stream::movement::{
     EntityMovementPlugin
 };
 use endless_stream::enemy::{ regular_enemy_movement, spawn_enemy_at };
-use bevy::prelude::*;
-use bevy::sprite::Anchor;
 
 fn main() {
     App::new()
