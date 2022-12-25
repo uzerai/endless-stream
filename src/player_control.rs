@@ -8,18 +8,18 @@ use bevy::ecs::system::{Res, Query};
 use bevy::input::Input;
 use bevy::input::keyboard::KeyCode;
 use bevy::app::{ App, Plugin };
-use bevy::core_pipeline::core_2d::Camera2d;
-use bevy::ecs::query::{ Without, With };
+use bevy::ecs::query::{  With };
 use bevy::transform::components::Transform;
+use bevy::log::info;
 
 use crate::movement::Movable;
+use crate::entity_health::Health;
 
 pub struct PlayerControlPlugin;
 
 impl Plugin for PlayerControlPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_system(layering_system)
+        app.add_system(layering_system)
             .add_system(keyboard_input_system)
             .add_system(animate_sprite);
     }
@@ -40,8 +40,8 @@ pub enum FacingDirection {
 
 // Handles keyboard events for any PlayerControlled Component-initializes entities.
 // TODO: allow for changing keybinds -- will come with the menu system me thinks
-fn keyboard_input_system(keyboard_input: Res<Input<KeyCode>>, mut player_character: Query<(&mut Movable, &PlayerControlled)>) {
-    for (mut movable, _) in &mut player_character {
+fn keyboard_input_system(keyboard_input: Res<Input<KeyCode>>, mut player_character: Query<(&mut Movable, &mut Health), With<PlayerControlled>>) {
+    for (mut movable, mut health) in &mut player_character {
         if keyboard_input.pressed(KeyCode::A) {
             movable.direction += Vec2::new(-0.3, 0.)
         }
@@ -56,6 +56,12 @@ fn keyboard_input_system(keyboard_input: Res<Input<KeyCode>>, mut player_charact
 
         if keyboard_input.pressed(KeyCode::D) {
             movable.direction += Vec2::new(0.3, 0.)
+        }
+
+        //TODO: remove after health testing.
+        if keyboard_input.pressed(KeyCode::U) {
+            health.current -= 1.;
+            info!("Removing 5 hp");
         }
 
         if keyboard_input.any_just_released([KeyCode::W, KeyCode::A, KeyCode::S, KeyCode::D]) {
@@ -113,7 +119,7 @@ pub struct Layered;
 // Updates the transform.translation.y coordinate to a float between 0 and 1,
 // TODO: need to genericize to accept the current level size later (hardcoded to 2000).
 fn layering_system(
-    mut sprite_entities: Query<&mut Transform, (With<Movable>, With<Layered>, Without<Camera2d>)>,
+    mut sprite_entities: Query<&mut Transform, (With<Movable>, With<Layered>)>,
 ) {
      for mut transform in &mut sprite_entities {
         let next_translation = 0.5 - (transform.translation.y / 2000.);

@@ -14,6 +14,7 @@ use endless_stream::movement::{
     Movable,
     EntityMovementPlugin
 };
+use endless_stream::entity_health::{ Health, PlayerHealthIndicator, EntityHealthPlugin };
 use endless_stream::enemy::{ regular_enemy_movement, spawn_enemy_at };
 
 fn main() {
@@ -24,6 +25,7 @@ fn main() {
         )
         .add_plugin(PlayerControlPlugin)
         .add_plugin(EntityMovementPlugin)
+        .add_plugin(EntityHealthPlugin)
         .add_system(regular_enemy_movement)
         .run();
 }
@@ -32,25 +34,12 @@ fn main() {
 fn setup(
     mut commands: Commands, 
     asset_server: Res<AssetServer>, 
-    mut texture_atlases: ResMut<Assets<TextureAtlas>>
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+    mut meshes: ResMut<Assets<Mesh>>,
 ) {
     let texture_handle = asset_server.load("player_character/gabe-idle-run.png");
     let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(24.0, 24.0), 7, 1, None, None);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
-
-    // Spawn and set the camera
-    commands.spawn(
-        (
-            Camera2dBundle::default(), Movable {
-                velocity: 200.,
-                direction: Vec2::ZERO,
-            }, 
-            Collidable {
-                size: Transform::from_scale(Vec3::new(26., 20., 3.))
-            },
-            PlayerControlled
-        )
-    );
 
     // Spawn and insert the background for the "walkable" level
     commands.spawn(
@@ -82,7 +71,6 @@ fn setup(
 
     spawn_enemy_at(&mut commands, &asset_server, &mut texture_atlases, Vec3::new(-400., 50., 0.));
 
-    // This creates the player character.
     commands.spawn(
         (
             SpriteSheetBundle {
@@ -100,9 +88,51 @@ fn setup(
             },
             FacingDirection::East,
             Layered,
-            AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating))
+            AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
+            Health {
+                max: 100.,
+                current: 100.
+            }
         )
-    );
+    ).with_children(|parent| {
+        parent.spawn(
+            (
+                SpriteBundle {
+                    sprite: Sprite {
+                        color: Color::rgb(1., 0., 0.),
+                        custom_size: Some(Vec2::new(20., 5.)),
+                        ..default()
+                    },
+                    transform: Transform::from_translation(Vec3::new(0., -20., 0.)),
+                    ..default()
+                },
+                PlayerHealthIndicator
+            )
+        ).with_children(|parent| {
+            parent.spawn(
+                SpriteBundle {
+                    sprite: Sprite {
+                        color: Color::rgb(0., 0., 0.),
+                        custom_size: Some(Vec2::new(20., 5.)),
+                        ..default()
+                    },
+                    transform: Transform::from_xyz(0., 0., -0.1),
+                    ..default()
+                }
+            );
+        });
+
+        parent.spawn(
+            Camera2dBundle {
+                transform: Transform::from_translation(Vec3::new(0., 0., 999.)),
+                projection: OrthographicProjection {
+                    scale: 0.5,
+                    ..default()
+                },
+                ..default()
+            }
+        );
+    });
 }
 
 fn spawn_tree_at(
