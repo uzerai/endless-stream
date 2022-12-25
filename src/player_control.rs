@@ -1,4 +1,19 @@
-use bevy::prelude::*;
+use bevy::sprite::{ TextureAtlas, TextureAtlasSprite };
+use bevy::asset::Handle;
+use bevy::time::{ Time, Timer };
+use bevy::ecs::component::Component;
+use bevy::prelude::{ Deref, DerefMut };
+use bevy::asset::Assets;
+use bevy::math::Vec2;
+use bevy::ecs::system::{Res, Query};
+use bevy::input::Input;
+use bevy::input::keyboard::KeyCode;
+use bevy::app::{ App, Plugin };
+use bevy::core_pipeline::core_2d::Camera2d;
+use bevy::ecs::query::{ Without, With };
+use bevy::transform::components::Transform;
+use bevy::log::*;
+
 use crate::movement::Movable;
 
 pub struct PlayerControlPlugin;
@@ -93,15 +108,18 @@ fn animate_sprite(
     }
 }
 
+#[derive(Component)]
+pub struct Layered;
+
 // Ensures sprite layering when moving up/down the level
 fn layering_system(
-    mut sprite_entities: Query<(&mut Transform, &Movable), Without<Camera2d>>,
+    mut sprite_entities: Query<&mut Transform, (With<Movable>, With<Layered>, Without<Camera2d>)>,
 ) {
-     for (mut transform, _) in &mut sprite_entities {
-        let next_layer = transform.translation.y * -0.01;
-        if next_layer > 0. && next_layer < 999.{
-            transform.translation.z = transform.translation.y * -0.1;
-        }
+     for mut transform in &mut sprite_entities {
+        let next_translation = 0.5 - (transform.translation.y / 2000.);
+
+        transform.translation.z = next_translation;
+
         info!("layering: <{},{},{}>", transform.translation.x, transform.translation.y, transform.translation.z);
      }
 }
