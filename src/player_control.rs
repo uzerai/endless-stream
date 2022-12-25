@@ -1,9 +1,8 @@
 use bevy::sprite::{ TextureAtlas, TextureAtlasSprite };
-use bevy::asset::Handle;
+use bevy::asset::{ Handle, Assets };
 use bevy::time::{ Time, Timer };
 use bevy::ecs::component::Component;
 use bevy::prelude::{ Deref, DerefMut };
-use bevy::asset::Assets;
 use bevy::math::Vec2;
 use bevy::ecs::system::{Res, Query};
 use bevy::input::Input;

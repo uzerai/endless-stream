@@ -33,7 +33,7 @@ fn setup(
     asset_server: Res<AssetServer>, 
     mut texture_atlases: ResMut<Assets<TextureAtlas>>
 ) {
-    let texture_handle = asset_server.load("gabe-idle-run.png");
+    let texture_handle = asset_server.load("player_character/gabe-idle-run.png");
     let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(24.0, 24.0), 7, 1, None, None);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
 
@@ -109,7 +109,7 @@ fn spawn_tree_at(
     asset_server: &Res<AssetServer>,
     vec3_translation: Vec3,
 ) {
-    let tree_texture_handle = asset_server.load("tree-sprite.png");
+    let tree_texture_handle = asset_server.load("environment/tree-sprite.png");
 
     commands.spawn(
         (
