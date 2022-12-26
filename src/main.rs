@@ -35,7 +35,6 @@ fn setup(
     mut commands: Commands, 
     asset_server: Res<AssetServer>, 
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
-    mut meshes: ResMut<Assets<Mesh>>,
 ) {
     let texture_handle = asset_server.load("player_character/gabe-idle-run.png");
     let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(24.0, 24.0), 7, 1, None, None);
@@ -69,7 +68,20 @@ fn setup(
         }
     }
 
-    spawn_enemy_at(&mut commands, &asset_server, &mut texture_atlases, Vec3::new(-400., 50., 0.));
+    let circle_spawn_radius = 700.;
+    let angle_interval = 5f32;
+    
+    for angle in 1i32..360i32 {
+        let angle_float = angle as f32;
+        if angle_float % angle_interval == 0. {
+            let x_spawn_float = circle_spawn_radius * angle_float.cos();
+            let y_spawn_float = circle_spawn_radius * angle_float.sin();
+
+            spawn_enemy_at(&mut commands, &asset_server, &mut texture_atlases, Vec3::new(x_spawn_float, y_spawn_float, 0.));
+        }
+    }
+
+    // spawn_enemy_at(&mut commands, &asset_server, &mut texture_atlases, Vec3::new(-400., 50., 0.));
 
     commands.spawn(
         (
