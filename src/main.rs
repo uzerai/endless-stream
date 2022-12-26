@@ -101,9 +101,10 @@ fn setup(
                     sprite: Sprite {
                         color: Color::rgb(1., 0., 0.),
                         custom_size: Some(Vec2::new(20., 5.)),
+                        anchor: Anchor::TopLeft,
                         ..default()
                     },
-                    transform: Transform::from_translation(Vec3::new(0., -20., 0.)),
+                    transform: Transform::from_translation(Vec3::new(-10., -20., 0.)),
                     ..default()
                 },
                 PlayerHealthIndicator
@@ -114,6 +115,7 @@ fn setup(
                     sprite: Sprite {
                         color: Color::rgb(0., 0., 0.),
                         custom_size: Some(Vec2::new(20., 5.)),
+                        anchor: Anchor::TopLeft,
                         ..default()
                     },
                     transform: Transform::from_xyz(0., 0., -0.1),

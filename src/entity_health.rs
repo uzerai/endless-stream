@@ -22,7 +22,7 @@ fn player_health_indicator_update(
     player_health: Query<&Health, With<PlayerControlled>>,
 ) {
     let player_health = player_health.single();
-    info!("Player health: {}", player_health.current);
+    // info!("Player health: {}", player_health.current);
 
     for mut health_sprite in &mut player_health_indicator {
         let health_decimal = player_health.current / player_health.max;

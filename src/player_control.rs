@@ -61,7 +61,7 @@ fn keyboard_input_system(keyboard_input: Res<Input<KeyCode>>, mut player_charact
         //TODO: remove after health testing.
         if keyboard_input.pressed(KeyCode::U) {
             health.current -= 1.;
-            info!("Removing 5 hp");
+            info!("Removing 1 hp");
         }
 
         if keyboard_input.any_just_released([KeyCode::W, KeyCode::A, KeyCode::S, KeyCode::D]) {
