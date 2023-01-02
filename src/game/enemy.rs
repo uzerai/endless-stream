@@ -1,3 +1,4 @@
+use crate::game::game_plugin::GameEntity;
 use bevy::time::Timer;
 use bevy::utils::default;
 use bevy::sprite::SpriteSheetBundle;
@@ -70,6 +71,7 @@ pub fn spawn_enemy_at(
             Collidable {
                 size: Transform::from_scale(Vec3::new(26., 20., 1.))
             },
+            GameEntity,
             FacingDirection::East,
             Layered,
             Enemy,

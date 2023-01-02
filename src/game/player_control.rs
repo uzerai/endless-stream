@@ -1,3 +1,5 @@
+use bevy::ecs::system::ResMut;
+use bevy::ecs::schedule::State;
 use bevy::sprite::{ TextureAtlas, TextureAtlasSprite };
 use bevy::asset::{ Handle, Assets };
 use bevy::time::{ Time, Timer };
@@ -13,6 +15,7 @@ use bevy::log::info;
 
 use crate::game::movement::Movable;
 use crate::game::entity_health::Health;
+use crate::AppState;
 
 #[derive(Component)]
 pub struct PlayerControlled;
@@ -30,8 +33,9 @@ pub enum FacingDirection {
 // Handles keyboard events for any PlayerControlled Component-initializes entities.
 // TODO: allow for changing keybinds -- will come with the menu system me thinks
 pub fn keyboard_input_system(
-    keyboard_input: Res<Input<KeyCode>>, 
-    mut player_character: Query<(&mut Movable, &mut Health), With<PlayerControlled>>
+    mut keyboard_input: ResMut<Input<KeyCode>>, 
+    mut player_character: Query<(&mut Movable, &mut Health), With<PlayerControlled>>,
+    mut app_state: ResMut<State<AppState>>,
 ) {
     for (mut movable, mut health) in &mut player_character {
         if keyboard_input.pressed(KeyCode::A) {
@@ -54,6 +58,11 @@ pub fn keyboard_input_system(
         if keyboard_input.pressed(KeyCode::U) {
             health.current -= 1.;
             info!("Removing 1 hp");
+        }
+
+        if keyboard_input.pressed(KeyCode::Space) {
+            app_state.set(AppState::MainMenu).unwrap();
+            keyboard_input.reset(KeyCode::Space);
         }
 
         if keyboard_input.any_just_released([KeyCode::W, KeyCode::A, KeyCode::S, KeyCode::D]) {

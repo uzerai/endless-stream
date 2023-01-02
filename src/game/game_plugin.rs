@@ -123,7 +123,7 @@ fn game_setup(
     }
 
     let circle_spawn_radius = 700.;
-    let angle_interval = 5f32;
+    let angle_interval = 15f32;
     
     for angle in 1i32..360i32 {
         let angle_float = angle as f32;
