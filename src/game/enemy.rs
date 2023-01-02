@@ -1,6 +1,4 @@
 use bevy::time::Timer;
-use crate::player_control::AnimationTimer;
-use crate::player_control::Layered;
 use bevy::utils::default;
 use bevy::sprite::SpriteSheetBundle;
 use bevy::math::Vec2;
@@ -19,8 +17,8 @@ use bevy::ecs::system::Query;
 use bevy::ecs::component::Component;
 use bevy::prelude::TimerMode;
 
-use crate::movement::{ Movable, Collidable };
-use crate::player_control::{ PlayerControlled,  FacingDirection };
+use crate::game::movement::{ Movable, Collidable };
+use crate::game::player_control::{ PlayerControlled,  FacingDirection, AnimationTimer, Layered };
 
 
 // Tag interface for all enemies.

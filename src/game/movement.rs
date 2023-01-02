@@ -1,6 +1,4 @@
 use bevy::log::*;
-use bevy::app::Plugin;
-use bevy::app::App;
 use bevy::ecs::query::With;
 use bevy::ecs::query::Without;
 use bevy::ecs::component::Component;
@@ -11,14 +9,6 @@ use bevy::ecs::system::Res;
 use bevy::ecs::system::Query;
 use bevy::math::Vec2;
 use bevy::sprite::collide_aabb::{ collide, Collision };
-
-pub struct EntityMovementPlugin;
-
-impl Plugin for EntityMovementPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_system(movement_system);
-    }
-}
 
 #[derive(Component)]
 pub struct LevelFloor;
@@ -53,7 +43,7 @@ impl Movable {
     }
 }
 
-fn movement_system(
+pub fn movement_system(
     time: Res<Time>, 
     mut movable_entities: Query<(&Movable, &mut Transform, &Collidable)>, 
     static_entities: Query<(&Transform, &Collidable), (Without<Movable>, Without<LevelFloor>)>,

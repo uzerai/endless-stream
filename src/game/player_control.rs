@@ -7,23 +7,12 @@ use bevy::math::Vec2;
 use bevy::ecs::system::{Res, Query};
 use bevy::input::Input;
 use bevy::input::keyboard::KeyCode;
-use bevy::app::{ App, Plugin };
 use bevy::ecs::query::{  With };
 use bevy::transform::components::Transform;
 use bevy::log::info;
 
-use crate::movement::Movable;
-use crate::entity_health::Health;
-
-pub struct PlayerControlPlugin;
-
-impl Plugin for PlayerControlPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_system(layering_system)
-            .add_system(keyboard_input_system)
-            .add_system(animate_sprite);
-    }
-}
+use crate::game::movement::Movable;
+use crate::game::entity_health::Health;
 
 #[derive(Component)]
 pub struct PlayerControlled;
@@ -40,7 +29,10 @@ pub enum FacingDirection {
 
 // Handles keyboard events for any PlayerControlled Component-initializes entities.
 // TODO: allow for changing keybinds -- will come with the menu system me thinks
-fn keyboard_input_system(keyboard_input: Res<Input<KeyCode>>, mut player_character: Query<(&mut Movable, &mut Health), With<PlayerControlled>>) {
+pub fn keyboard_input_system(
+    keyboard_input: Res<Input<KeyCode>>, 
+    mut player_character: Query<(&mut Movable, &mut Health), With<PlayerControlled>>
+) {
     for (mut movable, mut health) in &mut player_character {
         if keyboard_input.pressed(KeyCode::A) {
             movable.direction += Vec2::new(-0.3, 0.)
@@ -72,7 +64,7 @@ fn keyboard_input_system(keyboard_input: Res<Input<KeyCode>>, mut player_charact
 
 // Handles the animation switching for Movable, AnimationTimer TextureAtlas sprites.
 // TODO: move the actual animation component out of this so it will still apply to static animated sprites; separate as "sprite animation system"
-fn animate_sprite(
+pub fn animate_sprite(
     time: Res<Time>,
     texture_atlases: Res<Assets<TextureAtlas>>,
     mut movable_sprite_entity: Query<(
@@ -118,7 +110,7 @@ pub struct Layered;
 // Ensures sprite layering when moving up/down the level
 // Updates the transform.translation.y coordinate to a float between 0 and 1,
 // TODO: need to genericize to accept the current level size later (hardcoded to 2000).
-fn layering_system(
+pub fn layering_system(
     mut sprite_entities: Query<&mut Transform, (With<Movable>, With<Layered>)>,
 ) {
      for mut transform in &mut sprite_entities {

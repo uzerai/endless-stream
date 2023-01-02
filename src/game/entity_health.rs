@@ -1,23 +1,11 @@
 use bevy::math::Vec2;
-use crate::player_control::PlayerControlled;
+use crate::game::player_control::PlayerControlled;
 use bevy::ecs::query::With;
 use bevy::sprite::Sprite;
 use bevy::ecs::system::Query;
-use bevy::app::App;
-use bevy::app::Plugin;
 use bevy::ecs::component::Component;
-use bevy::log::info;
 
-
-pub struct EntityHealthPlugin;
-
-impl Plugin for EntityHealthPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_system(player_health_indicator_update);
-    }
-}
-
-fn player_health_indicator_update(
+pub fn player_health_indicator_update(
     mut player_health_indicator: Query<&mut Sprite, With<PlayerHealthIndicator>>,
     player_health: Query<&Health, With<PlayerControlled>>,
 ) {
