@@ -8,4 +8,4 @@ keywords = ["gamedev", "2d", "indie"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bevy = "0.9.1"
+bevy =  { version = "0.9.1" }

@@ -43,15 +43,15 @@ pub fn keyboard_input_system(
         }
 
         if keyboard_input.pressed(KeyCode::S) {
-            movable.direction += Vec2::new(0., -0.3)
+            movable.direction += Vec2::new(0., -0.5)
         }
 
         if keyboard_input.pressed(KeyCode::W) {
-            movable.direction += Vec2::new(0., 0.3)
+            movable.direction += Vec2::new(0., 0.5)
         }
 
         if keyboard_input.pressed(KeyCode::D) {
-            movable.direction += Vec2::new(0.3, 0.)
+            movable.direction += Vec2::new(0.5, 0.)
         }
 
         //TODO: remove after health testing.
