@@ -1,9 +1,7 @@
-use bevy::math::Vec2;
-use crate::game::player_control::PlayerControlled;
-use bevy::ecs::query::With;
-use bevy::sprite::Sprite;
-use bevy::ecs::system::Query;
-use bevy::ecs::component::Component;
+use bevy::prelude::*;
+use super::component::PlayerHealthIndicator;
+use crate::game::player::component::PlayerControlled;
+use crate::game::health::component::Health;
 
 pub fn player_health_indicator_update(
     mut player_health_indicator: Query<&mut Sprite, With<PlayerHealthIndicator>>,
@@ -17,12 +15,3 @@ pub fn player_health_indicator_update(
         health_sprite.custom_size = Some(Vec2::new(20. * health_decimal, 5.))
     }
 }
-
-#[derive(Component)]
-pub struct Health {
-    pub max: f32,
-    pub current: f32,
-}
-
-#[derive(Component)]
-pub struct PlayerHealthIndicator;

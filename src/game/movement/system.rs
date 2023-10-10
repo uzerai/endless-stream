@@ -1,51 +1,11 @@
-use bevy::log::*;
-use bevy::ecs::query::With;
-use bevy::ecs::query::Without;
-use bevy::ecs::component::Component;
-use bevy::sprite::Sprite;
-use bevy::transform::components::Transform;
-use bevy::time::Time;
-use bevy::ecs::system::Res;
-use bevy::ecs::system::Query;
-use bevy::math::Vec2;
-use bevy::sprite::collide_aabb::{ collide, Collision };
+use bevy::prelude::*;
+use bevy::sprite::collide_aabb::{collide, Collision};
+use crate::game::level::component::LevelFloor;
+use crate::game::movement::component::{ Collidable, Movable };
 
-#[derive(Component)]
-pub struct LevelFloor;
-
-#[derive(Component)]
-pub struct Movable {
-    pub velocity: f32,
-    pub direction: Vec2
-}
-
-#[derive(Component)]
-pub struct Collidable {
-    pub size: Transform,
-}
-
-// TODO: Need to figure out a way to anchor the collidable to the bottom of each sprite, 
-// rather than in the center and expanding outwards from there.
-// this is required to support uneven shapes.
-impl Collidable {
-    fn size(self: &Collidable) -> Vec2 {
-        return self.size.scale.truncate();
-    }
-}
-
-impl Movable {
-    pub fn get_x_direction(self: &Movable) -> f32 {
-        Vec2::as_ref(&Vec2::normalize_or_zero(self.direction))[0]
-    }
-
-    pub fn get_y_direction(self: &Movable) -> f32 {
-        Vec2::as_ref(&Vec2::normalize_or_zero(self.direction))[1]
-    }
-}
-
-pub fn movement_system(
-    time: Res<Time>, 
-    mut movable_entities: Query<(&Movable, &mut Transform, &Collidable)>, 
+pub fn entity_movement_system(
+    time: Res<Time>,
+    mut movable_entities: Query<(&Movable, &mut Transform, &Collidable)>,
     static_entities: Query<(&Transform, &Collidable), (Without<Movable>, Without<LevelFloor>)>,
     level: Query<(&Transform, &Sprite), (With<LevelFloor>, Without<Collidable>)>
 ) {

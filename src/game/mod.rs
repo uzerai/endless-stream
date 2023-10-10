@@ -1,92 +1,43 @@
-use bevy::ecs::system::Query;
-use bevy::ecs::entity::Entity;
-use bevy::ecs::query::With;
-use bevy::prelude::DespawnRecursiveExt;
-use bevy::prelude::BuildChildren;
-use bevy::asset::Assets;
+use bevy::prelude::*;
 use bevy::sprite::Anchor;
-use bevy::render::camera::OrthographicProjection;
-use crate::game::entity_health::Health;
-use bevy::time::Timer;
-use bevy::ecs::component::Component;
-use crate::game::enemy::regular_enemy_movement;
-use crate::game::enemy::spawn_enemy_at;
-use bevy::sprite::SpriteSheetBundle;
-use bevy::ecs::system::Commands;
-use bevy::ecs::system::Res;
-use bevy::asset::AssetServer;
-use bevy::ecs::system::ResMut;
-use bevy::sprite::TextureAtlas;
-use bevy::time::TimerMode;
-use bevy::utils::default;
-use bevy::math::Vec3;
-use crate::game::entity_health::PlayerHealthIndicator;
-use bevy::sprite::SpriteBundle;
-use bevy::sprite::Sprite;
-use bevy::render::color::Color;
-use bevy::math::Vec2;
-use bevy::transform::components::Transform;
-use bevy::core_pipeline::core_2d::Camera2dBundle;
-use bevy::ecs::schedule::SystemSet;
-use bevy::app::{ App, Plugin };
 
 use crate::AppState;
-use crate::game::{ 
-    movement::{ 
-        movement_system,
-        LevelFloor,
-        Collidable,
-        Movable
-    },
-    player_control::{ 
-        keyboard_input_system,
-        animate_sprite,
-        layering_system,
-        Layered, 
-        FacingDirection, 
-        AnimationTimer, 
-        PlayerControlled
-    },
-    entity_health::{
-        player_health_indicator_update
-    }
-};
+use player::system::keyboard_input_system;
+use sprite::system::{ animate_sprite, layering_system };
+use movement::system::entity_movement_system;
+use level::component::LevelFloor;
+use crate::game::health::component::{Health, PlayerHealthIndicator};
+use crate::game::movement::component::{Collidable, Movable};
+use crate::game::player::component::PlayerControlled;
+use crate::game::sprite::component::{AnimationTimer, FacingDirection, Layered};
 
-fn despawn_screen<T: Component>(to_despawn: Query<Entity, With<T>>, mut commands: Commands) {
-    for entity in &to_despawn {
-        commands.entity(entity).despawn_recursive();
-    }
-}
+pub mod game_state;
+pub mod level;
+pub mod movement;
+pub mod player;
+pub mod sprite;
+pub mod health;
 
-pub struct GamePlugin;
+
 
 #[derive(Component)]
 pub struct GameEntity;
 
+pub struct GamePlugin;
+
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(
-            SystemSet::on_enter(AppState::InGame)
-                .with_system(game_setup)
-        )
-        .add_system_set(
-            SystemSet::on_update(AppState::InGame)
-                .with_system(animate_sprite)
-                .with_system(keyboard_input_system)
-                .with_system(layering_system)
-                .with_system(movement_system)
-                .with_system(regular_enemy_movement)
-                .with_system(player_health_indicator_update)
-        )
-        .add_system_set(
-            SystemSet::on_enter(AppState::MainMenu).with_system(despawn_screen::<GameEntity>)
-        );
+        app.add_systems(OnEnter(AppState::GamePlaying), game_setup)
+            .add_systems(Update, (animate_sprite, layering_system).run_if(in_state(AppState::GamePlaying)))
+            .add_systems(Update, (entity_movement_system).run_if(in_state(AppState::GamePlaying)))
+            .add_systems(Update, keyboard_input_system.run_if(in_state(AppState::GamePlaying)))
+            .add_systems(OnExit(AppState::MainMenu), despawn_screen::<GameEntity>);
     }
 }
 
 fn game_setup(
-    mut commands: Commands, 
-    asset_server: Res<AssetServer>, 
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
     let texture_handle = asset_server.load("player_character/gabe-idle-run.png");
@@ -124,7 +75,7 @@ fn game_setup(
 
     let circle_spawn_radius = 700.;
     let angle_interval = 15f32;
-    
+
     for angle in 1i32..360i32 {
         let angle_float = angle as f32;
         if angle_float % angle_interval == 0. {
@@ -212,7 +163,7 @@ fn game_setup(
 }
 
 fn spawn_tree_at(
-    commands: &mut Commands, 
+    commands: &mut Commands,
     asset_server: &Res<AssetServer>,
     vec3_translation: Vec3,
 ) {
@@ -236,6 +187,69 @@ fn spawn_tree_at(
                 size: Transform::from_scale(Vec3::new(16., 20., 1.))
             },
             FacingDirection::East,
+        )
+    );
+}
+fn despawn_screen<T: Component>(to_despawn: Query<Entity, With<T>>, mut commands: Commands) {
+    for entity in &to_despawn {
+        commands.entity(entity).despawn_recursive();
+    }
+}
+
+// Tag interface for all enemies.
+#[derive(Component)]
+pub struct Enemy;
+
+// Tag interface for marking enemies that will not follow the regular movement pattern of always pathing towards the player.
+#[derive(Component)]
+pub struct IrregularEnemy;
+
+// Makes use of the Movable struct to point the enemy to always walk towards the player character.
+pub fn regular_enemy_movement(
+    player_character: Query<(
+        &Movable, &mut Transform, &Collidable),
+        (With<PlayerControlled>, (Without<Camera2d>, Without<Enemy>)
+    )>,
+    mut enemies: Query<(&mut Movable, &mut Transform, &Collidable), (With<Enemy>, Without<IrregularEnemy>)>,
+) {
+    let (_player_movable, player_transform, _player_collide) = player_character.single();
+
+    for (mut enemy_movable, enemy_transform, _) in &mut enemies {
+        let target_dir = player_transform.translation.truncate() - enemy_transform.translation.truncate();
+        enemy_movable.direction = target_dir;
+    }
+}
+
+pub fn spawn_enemy_at(
+    commands: &mut Commands,
+    asset_server: &Res<AssetServer>,
+    texture_atlases: &mut ResMut<Assets<TextureAtlas>>,
+    vec3_translation: Vec3
+) {
+    let texture_handle = asset_server.load("player_character/gabe-idle-run.png");
+    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(24.0, 24.0), 7, 1, None, None);
+    let texture_atlas_handle = texture_atlases.add(texture_atlas);
+
+    commands.spawn(
+        (
+            SpriteSheetBundle {
+                texture_atlas: texture_atlas_handle,
+                transform: Transform::from_scale(Vec3::splat(2.))
+                    .with_translation(vec3_translation),
+                ..default()
+            },
+            Movable {
+                velocity: 150.,
+                direction: Vec2::ZERO,
+            },
+            Collidable {
+                size: Transform::from_scale(Vec3::new(26., 20., 1.))
+            },
+            GameEntity,
+            FacingDirection::East,
+            Layered,
+            Enemy,
+            AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating))
         )
     );
 }

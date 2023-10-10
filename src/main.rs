@@ -1,13 +1,24 @@
 use bevy::prelude::*;
-use endless_stream::AppState;
+use menu::MenuPlugin;
+use game::GamePlugin;
+
+pub mod menu;
+pub mod game;
+
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
+pub enum AppState {
+    #[default]
+    MainMenu,
+    SplashScreen,
+    Loading,
+    GamePlaying,
+}
 
 fn main() {
     App::new()
-        .add_plugins(
-            DefaultPlugins.set(ImagePlugin::default_nearest())
-        )
-        .add_state(AppState::MainMenu)
-        .add_plugin(endless_stream::game::game_plugin::GamePlugin)
-        .add_plugin(endless_stream::menu::menu_plugin::MenuPlugin)
+        .add_state::<AppState>()
+        .add_plugins(DefaultPlugins)
+        .add_plugins(MenuPlugin)
+        .add_plugins(GamePlugin)
         .run();
 }

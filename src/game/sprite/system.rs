@@ -1,77 +1,8 @@
-use bevy::ecs::system::ResMut;
-use bevy::ecs::schedule::State;
-use bevy::sprite::{ TextureAtlas, TextureAtlasSprite };
-use bevy::asset::{ Handle, Assets };
-use bevy::time::{ Time, Timer };
-use bevy::ecs::component::Component;
-use bevy::prelude::{ Deref, DerefMut };
-use bevy::math::Vec2;
-use bevy::ecs::system::{Res, Query};
-use bevy::input::Input;
-use bevy::input::keyboard::KeyCode;
-use bevy::ecs::query::{  With };
-use bevy::transform::components::Transform;
-use bevy::log::info;
+use bevy::prelude::*;
+use crate::game::movement::component::Movable;
+use crate::game::sprite::component::{AnimationTimer, FacingDirection, Layered};
 
-use crate::game::movement::Movable;
-use crate::game::entity_health::Health;
-use crate::AppState;
-
-#[derive(Component)]
-pub struct PlayerControlled;
-
-#[derive(Component, Deref, DerefMut)]
-pub struct AnimationTimer(pub Timer);
-
-// To allow facing Sprite entities in either X direction.
-#[derive(Component)]
-pub enum FacingDirection {
-    East,
-    West
-}
-
-// Handles keyboard events for any PlayerControlled Component-initializes entities.
-// TODO: allow for changing keybinds -- will come with the menu system me thinks
-pub fn keyboard_input_system(
-    mut keyboard_input: ResMut<Input<KeyCode>>, 
-    mut player_character: Query<(&mut Movable, &mut Health), With<PlayerControlled>>,
-    mut app_state: ResMut<State<AppState>>,
-) {
-    for (mut movable, mut health) in &mut player_character {
-        if keyboard_input.pressed(KeyCode::A) {
-            movable.direction += Vec2::new(-0.3, 0.)
-        }
-
-        if keyboard_input.pressed(KeyCode::S) {
-            movable.direction += Vec2::new(0., -0.5)
-        }
-
-        if keyboard_input.pressed(KeyCode::W) {
-            movable.direction += Vec2::new(0., 0.5)
-        }
-
-        if keyboard_input.pressed(KeyCode::D) {
-            movable.direction += Vec2::new(0.5, 0.)
-        }
-
-        //TODO: remove after health testing.
-        if keyboard_input.pressed(KeyCode::U) {
-            health.current -= 1.;
-            info!("Removing 1 hp");
-        }
-
-        if keyboard_input.pressed(KeyCode::Space) {
-            app_state.set(AppState::MainMenu).unwrap();
-            keyboard_input.reset(KeyCode::Space);
-        }
-
-        if keyboard_input.any_just_released([KeyCode::W, KeyCode::A, KeyCode::S, KeyCode::D]) {
-            movable.direction = Vec2::ZERO
-        }
-    }
-}
-
-// Handles the animation switching for Movable, AnimationTimer TextureAtlas sprites.
+//Handles the animation switching for Movable, AnimationTimer TextureAtlas sprites.
 // TODO: move the actual animation component out of this so it will still apply to static animated sprites; separate as "sprite animation system"
 pub fn animate_sprite(
     time: Res<Time>,
@@ -112,9 +43,6 @@ pub fn animate_sprite(
         }
     }
 }
-
-#[derive(Component)]
-pub struct Layered;
 
 // Ensures sprite layering when moving up/down the level
 // Updates the transform.translation.y coordinate to a float between 0 and 1,
